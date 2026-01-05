@@ -52,3 +52,7 @@ Thumbs.db
 # Sensitive Data (同仁個人資料)
 staff_data.json
 monthly_data.json
+
+# Google OAuth 憑證
+credentials.json
+token.json

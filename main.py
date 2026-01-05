@@ -6,6 +6,10 @@ from sqlalchemy.orm import sessionmaker
 import os
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+
+# 載入環境變數
+load_dotenv()
 
 # 讀取環境變數（本地開發預設使用 SQLite）
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./monthly_report.db")
@@ -131,13 +135,31 @@ def init_db():
     finally:
         db.close()
 
-# 啟動時初始化資料庫
+# 啟動時初始化資料庫和排程器
 @app.on_event("startup")
-def startup_event():
+async def startup_event():
     print("=" * 50)
     print("🚀 財務處月報系統啟動中...")
     print("=" * 50)
     init_db()
+
+    # 初始化並啟動排程器
+    from scheduler import SchedulerService
+    global scheduler_service
+    scheduler_service = SchedulerService(SessionLocal)
+    scheduler_service.start()
+    print("✅ 郵件排程系統已啟動")
+
+# 關閉時停止排程器
+@app.on_event("shutdown")
+async def shutdown_event():
+    global scheduler_service
+    if scheduler_service:
+        scheduler_service.shutdown()
+    print("👋 系統已關閉")
+
+# 全域排程器實例
+scheduler_service = None
 
 # ==================== 輔助函數 ====================
 
