@@ -48,3 +48,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Sensitive Data (同仁個人資料)
+staff_data.json
+monthly_data.json

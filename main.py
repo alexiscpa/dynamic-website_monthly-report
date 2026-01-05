@@ -90,19 +90,23 @@ def init_db():
 
             db.add(monthly_data)
 
-            # ============ 同事名單（從 Google Sheets 匯入）============
-            staff_list = [
-                {"id": 1, "name": "周渝民", "email": "alexiscpa@gmail.com", "birthday": "1970.1.5"},
-                {"id": 2, "name": "許瑋甯", "email": "ahua.li@test.com", "birthday": "1985.1.6"},
-                {"id": 3, "name": "王淨", "email": "datong@demo.com", "birthday": "1995.1.6"},
-                {"id": 4, "name": "安心亞", "email": "meimei@mail.com", "birthday": "1993.1.7"},
-                {"id": 5, "name": "柯佳嬿", "email": "", "birthday": "1980.3.5"},
-                {"id": 6, "name": "賴雅妍", "email": "", "birthday": "1979.4.10"},
-                {"id": 7, "name": "張惠妹", "email": "", "birthday": "1978.10.3"},
-                {"id": 8, "name": "林辰唏", "email": "", "birthday": "1985.11.20"},
-                {"id": 9, "name": "李千娜", "email": "", "birthday": "1994.6.1"},
-                {"id": 10, "name": "林予晞", "email": "", "birthday": "1987.3.5"}
-            ]
+            # ============ 同事名單（從外部檔案載入）============
+            # 嘗試從 staff_data.json 讀取，如果不存在則使用範例資料
+            staff_file = "staff_data.json"
+            if not os.path.exists(staff_file):
+                staff_file = "staff_data.example.json"
+                print(f"⚠️  找不到 staff_data.json，使用範例資料：{staff_file}")
+
+            try:
+                with open(staff_file, 'r', encoding='utf-8') as f:
+                    staff_list = json.load(f)
+                print(f"✅ 成功載入同事資料：{len(staff_list)} 筆")
+            except Exception as e:
+                print(f"❌ 載入同事資料失敗：{e}")
+                # 使用最小範例資料
+                staff_list = [
+                    {"id": 1, "name": "範例員工", "email": "example@company.com", "birthday": "1990.1.1"}
+                ]
 
             for staff_data in staff_list:
                 staff = Staff(

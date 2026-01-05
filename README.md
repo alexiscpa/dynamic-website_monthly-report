@@ -34,7 +34,23 @@
 pip install -r requirements.txt
 ```
 
-### 2. 啟動應用
+### 2. 設定同事資料（重要）
+
+**方式 A：使用實際資料**
+```bash
+# 複製範例檔案
+cp staff_data.example.json staff_data.json
+
+# 編輯 staff_data.json，填入實際同事資料
+# 注意：此檔案已加入 .gitignore，不會被提交到 Git
+```
+
+**方式 B：使用範例資料**
+```bash
+# 不需任何操作，系統會自動使用 staff_data.example.json
+```
+
+### 3. 啟動應用
 
 ```bash
 uvicorn main:app --reload
