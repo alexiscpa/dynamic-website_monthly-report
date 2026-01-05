@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>財務處月報系統 - 預覽</title>
+    <style>
+        /* CSS 變數定義 */
+        :root {
+            --bg-color: #fffffe;
+            --dark-color: #272343;
+            --accent-color: #ffd803;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        /* Header 標題區 */
+        .header {
+            background-color: var(--dark-color);
+            padding: 48px 24px;
+            text-align: center;
+            border: 2px solid var(--dark-color);
+        }
+
+        .header h1 {
+            color: var(--accent-color);
+            font-size: 48px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--accent-color);
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        /* Quote Section 激勵金句 */
+        .quote-section {
+            background-color: var(--accent-color);
+            padding: 32px 24px;
+            text-align: center;
+            border: 2px solid var(--dark-color);
+            border-top: none;
+        }
+
+        .quote-section p {
+            color: var(--dark-color);
+            font-size: 28px;
+            font-weight: bold;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+
+        /* Section 容器 */
+        .section {
+            background-color: var(--bg-color);
+            border: 2px solid var(--dark-color);
+            padding: 32px 24px;
+            margin-top: -2px;
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--dark-color);
+            border-bottom: 4px solid var(--dark-color);
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+        }
+
+        /* Section 1: 上月完成工作 (兩欄佈局) */
+        .retrospective-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .work-image {
+            width: 100%;
+            height: auto;
+            border: 2px solid var(--dark-color);
+            object-fit: cover;
+            aspect-ratio: 4/3;
+        }
+
+        .work-list {
+            list-style: none;
+        }
+
+        .work-list li {
+            padding: 16px 0;
+            border-bottom: 2px solid var(--dark-color);
+        }
+
+        .work-list li:last-child {
+            border-bottom: none;
+        }
+
+        .work-list li strong {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .work-list li p {
+            color: var(--dark-color);
+            opacity: 0.8;
+        }
+
+        /* Section 2: 本月工作重點 */
+        .highlight-box {
+            background-color: var(--dark-color);
+            color: var(--accent-color);
+            padding: 24px;
+            border: 2px solid var(--dark-color);
+            margin-top: 24px;
+        }
+
+        .highlight-box h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .highlight-box ul {
+            list-style: none;
+        }
+
+        .highlight-box li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--accent-color);
+        }
+
+        .highlight-box li:last-child {
+            border-bottom: none;
+        }
+
+        /* Section 3: 本月行事曆 + 月曆 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .calendar-table th {
+            background-color: var(--dark-color);
+            color: var(--accent-color);
+            padding: 16px;
+            text-align: left;
+            border: 2px solid var(--dark-color);
+            font-size: 18px;
+        }
+
+        .calendar-table td {
+            padding: 16px;
+            border: 2px solid var(--dark-color);
+        }
+
+        .calendar-table tr:nth-child(even) {
+            background-color: rgba(255, 216, 3, 0.1);
+        }
+
+        .date-badge {
+            background-color: var(--accent-color);
+            color: var(--dark-color);
+            padding: 8px 16px;
+            border: 2px solid var(--dark-color);
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 12px;
+        }
+
+        /* 月曆樣式 */
+        .month-calendar {
+            border: 2px solid var(--dark-color);
+            padding: 16px;
+            background-color: var(--bg-color);
+        }
+
+        .month-calendar-header {
+            text-align: center;
+            background-color: var(--dark-color);
+            color: var(--accent-color);
+            padding: 12px;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 12px;
+            border: 2px solid var(--dark-color);
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .calendar-weekdays div {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            padding: 8px 4px;
+            background-color: var(--accent-color);
+            border: 1px solid var(--dark-color);
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-days div {
+            text-align: center;
+            padding: 8px 4px;
+            border: 1px solid var(--dark-color);
+            font-size: 14px;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-days .empty {
+            border: none;
+        }
+
+        .calendar-days .event-day {
+            background-color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .calendar-days .today {
+            background-color: var(--dark-color);
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Section 4: 壽星祝福 */
+        .birthday-section {
+            background-color: var(--bg-color);
+            border: 2px solid var(--dark-color);
+            padding: 32px 24px;
+            margin-top: -2px;
+        }
+
+        .birthday-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .birthday-card {
+            background-color: var(--accent-color);
+            border: 2px solid var(--dark-color);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .birthday-card h3 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .birthday-card p {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .birthday-card .date {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px 24px;
+            color: var(--dark-color);
+            opacity: 0.6;
+            font-size: 14px;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .quote-section p {
+                font-size: 20px;
+            }
+
+            .section-title {
+                font-size: 24px;
+            }
+
+            .retrospective-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-table {
+                font-size: 14px;
+            }
+
+            .calendar-table th,
+            .calendar-table td {
+                padding: 12px 8px;
+            }
+
+            .birthday-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header 標題區 -->
+        <div class="header">
+            <h1>MONTHLY REPORT</h1>
+            <p>財務處 2026 年 1 月份月報</p>
+        </div>
+
+        <!-- Quote Section 激勵金句 -->
+        <div class="quote-section">
+            <p>細緻的數字背後，是財務人對公司價值的守護。</p>
+        </div>
+
+        <!-- Section 1: 上月完成工作 -->
+        <div class="section">
+            <h2 class="section-title">上月完成工作 Retrospective</h2>
+            <div class="retrospective-grid">
+                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
+                     alt="工作側拍" class="work-image">
+                <ul class="work-list">
+                    <li>
+                        <strong>年度預算審核</strong>
+                        <p>完成 2026 年度預算審核，並提交董事會核准</p>
+                    </li>
+                    <li>
+                        <strong>Q4 報稅</strong>
+                        <p>完成第四季度營業稅及所得稅申報作業</p>
+                    </li>
+                    <li>
+                        <strong>會計師查帳</strong>
+                        <p>配合外部會計師完成年度財務報表查核</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 2: 本月工作重點 -->
+        <div class="section">
+            <h2 class="section-title">本月工作重點 Focus Area</h2>
+            <div class="highlight-box">
+                <ul>
+                    <li>
+                        <h3>年終獎金試算</h3>
+                        <p>完成全體員工年終獎金試算與核對</p>
+                    </li>
+                    <li>
+                        <h3>新會計系統測試</h3>
+                        <p>進行新一代 ERP 會計模組上線前測試</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section 3: 本月重要行事曆 + 月曆 -->
+        <div class="section">
+            <h2 class="section-title">本月重要行事曆 Calendar</h2>
+            <div class="calendar-grid">
+                <!-- 左側：行事曆表格 -->
+                <div>
+                    <table class="calendar-table">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>事項</th>
+                                <th>說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="date-badge">1/10</span></td>
+                                <td><strong>營業稅申報</strong></td>
+                                <td>1 月 10 日前完成 12 月份營業稅申報</td>
+                            </tr>
+                            <tr>
+                                <td><span class="date-badge">1/25</span></td>
+                                <td><strong>員工薪資發放</strong></td>
+                                <td>1 月 25 日發放 1 月份薪資</td>
+                            </tr>
+                            <tr>
+                                <td><span class="date-badge">1/31</span></td>
+                                <td><strong>月底結帳</strong></td>
+                                <td>1 月 31 日完成月度財務結帳作業</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 右側：當月月曆 -->
+                <div class="month-calendar">
+                    <div class="month-calendar-header">2026 年 1 月</div>
+                    <div class="calendar-weekdays">
+                        <div>日</div>
+                        <div>一</div>
+                        <div>二</div>
+                        <div>三</div>
+                        <div>四</div>
+                        <div>五</div>
+                        <div>六</div>
+                    </div>
+                    <div class="calendar-days">
+                        <!-- 1月1日是星期三，前面空3格 -->
+                        <div class="empty"></div>
+                        <div class="empty"></div>
+                        <div class="empty"></div>
+                        <div>1</div>
+                        <div>2</div>
+                        <div>3</div>
+                        <div>4</div>
+                        <div today>5</div>
+                        <div>6</div>
+                        <div>7</div>
+                        <div>8</div>
+                        <div>9</div>
+                        <div class="event-day">10</div>
+                        <div>11</div>
+                        <div>12</div>
+                        <div>13</div>
+                        <div>14</div>
+                        <div>15</div>
+                        <div>16</div>
+                        <div>17</div>
+                        <div>18</div>
+                        <div>19</div>
+                        <div>20</div>
+                        <div>21</div>
+                        <div>22</div>
+                        <div>23</div>
+                        <div>24</div>
+                        <div class="event-day">25</div>
+                        <div>26</div>
+                        <div>27</div>
+                        <div>28</div>
+                        <div>29</div>
+                        <div>30</div>
+                        <div class="event-day">31</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: 壽星祝福 -->
+        <div class="birthday-section">
+            <h2 class="section-title">本月壽星祝福 Birthday Celebration</h2>
+            <div class="birthday-grid">
+                <div class="birthday-card">
+                    <h3>🎉 周渝民</h3>
+                    <p>alexiscpa@gmail.com</p>
+                    <p class="date">生日：1/5</p>
+                </div>
+                <div class="birthday-card">
+                    <h3>🎉 許瑋甯</h3>
+                    <p>ahua.li@test.com</p>
+                    <p class="date">生日：1/6</p>
+                </div>
+                <div class="birthday-card">
+                    <h3>🎉 王淨</h3>
+                    <p>datong@demo.com</p>
+                    <p class="date">生日：1/6</p>
+                </div>
+                <div class="birthday-card">
+                    <h3>🎉 安心亞</h3>
+                    <p>meimei@mail.com</p>
+                    <p class="date">生日：1/7</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer 頁尾 -->
+        <div class="footer">
+            <p>© 2026 財務處自動化月報系統 | Powered by FastAPI & PostgreSQL</p>
+        </div>
+    </div>
+</body>
+</html>
