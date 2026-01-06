@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, Column, Integer, String, Text, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -56,6 +57,15 @@ class Staff(Base):
 
 # 建立 FastAPI 應用
 app = FastAPI(title="財務處月報系統")
+
+# 添加 CORS 中間件（允許測試工具訪問 API）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允許所有來源（生產環境建議限制特定網域）
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ==================== 初始化資料庫 ====================
 
