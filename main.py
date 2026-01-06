@@ -106,29 +106,43 @@ def init_db():
 
             db.add(monthly_data)
 
-            # ============ 同事名單（從外部檔案載入）============
-            # 嘗試從 staff_data.json 讀取，如果不存在則使用範例資料
-            staff_file = "staff_data.json"
-            if not os.path.exists(staff_file):
-                staff_file = "staff_data.example.json"
-                print(f"⚠️  找不到 staff_data.json，使用範例資料：{staff_file}")
+            # ============ 同事名單（優先從環境變數載入）============
+            # 1. 優先從環境變數 STAFF_DATA_JSON 讀取（用於 Zeabur 等雲端部署）
+            # 2. 如果沒有環境變數，則從檔案讀取
+            staff_list = []
 
-            try:
-                with open(staff_file, 'r', encoding='utf-8') as f:
-                    staff_list = json.load(f)
-                print(f"✅ 成功載入同事資料：{len(staff_list)} 筆")
-            except Exception as e:
-                print(f"❌ 載入同事資料失敗：{e}")
-                # 使用最小範例資料
-                staff_list = [
-                    {"id": 1, "name": "範例員工", "email": "example@company.com", "birthday": "1990.1.1"}
-                ]
+            # 嘗試從環境變數載入
+            staff_json_env = os.getenv("STAFF_DATA_JSON")
+            if staff_json_env:
+                try:
+                    staff_list = json.loads(staff_json_env)
+                    print(f"✅ 從環境變數載入同事資料：{len(staff_list)} 筆")
+                except Exception as e:
+                    print(f"❌ 解析環境變數 STAFF_DATA_JSON 失敗：{e}")
+
+            # 如果環境變數沒有資料，從檔案讀取
+            if not staff_list:
+                staff_file = "staff_data.json"
+                if not os.path.exists(staff_file):
+                    staff_file = "staff_data.example.json"
+                    print(f"⚠️  找不到 staff_data.json，使用範例資料：{staff_file}")
+
+                try:
+                    with open(staff_file, 'r', encoding='utf-8') as f:
+                        staff_list = json.load(f)
+                    print(f"✅ 從檔案載入同事資料：{len(staff_list)} 筆")
+                except Exception as e:
+                    print(f"❌ 載入同事資料失敗：{e}")
+                    # 使用最小範例資料
+                    staff_list = [
+                        {"id": 1, "name": "範例員工", "email": "example@company.com", "birthday": "1990.1.1"}
+                    ]
 
             for staff_data in staff_list:
                 staff = Staff(
                     id=staff_data["id"],
                     name=staff_data["name"],
-                    email=staff_data["email"],
+                    email=staff_data.get("email", ""),
                     birthday=staff_data["birthday"]
                 )
                 db.add(staff)
@@ -715,5 +729,62 @@ async def get_report(month: str):
             "calendar": json.loads(report.calendar),
             "quotes": report.quotes
         }
+    finally:
+        db.close()
+
+@app.post("/api/staff/sync")
+async def sync_staff():
+    """API：同步更新同事資料（從環境變數或檔案）"""
+    db = SessionLocal()
+    try:
+        # 載入同事資料（與 init_db 相同的邏輯）
+        staff_list = []
+
+        # 嘗試從環境變數載入
+        staff_json_env = os.getenv("STAFF_DATA_JSON")
+        if staff_json_env:
+            try:
+                staff_list = json.loads(staff_json_env)
+                print(f"✅ 從環境變數載入同事資料：{len(staff_list)} 筆")
+            except Exception as e:
+                return {"error": f"解析環境變數 STAFF_DATA_JSON 失敗：{e}"}
+
+        # 如果環境變數沒有資料，從檔案讀取
+        if not staff_list:
+            staff_file = "staff_data.json"
+            if not os.path.exists(staff_file):
+                staff_file = "staff_data.example.json"
+
+            try:
+                with open(staff_file, 'r', encoding='utf-8') as f:
+                    staff_list = json.load(f)
+                print(f"✅ 從檔案載入同事資料：{len(staff_list)} 筆")
+            except Exception as e:
+                return {"error": f"載入同事資料失敗：{e}"}
+
+        # 刪除現有的所有同事資料
+        db.query(Staff).delete()
+
+        # 寫入新的同事資料
+        for staff_data in staff_list:
+            staff = Staff(
+                id=staff_data["id"],
+                name=staff_data["name"],
+                email=staff_data.get("email", ""),
+                birthday=staff_data["birthday"]
+            )
+            db.add(staff)
+
+        db.commit()
+
+        return {
+            "success": True,
+            "message": f"成功同步 {len(staff_list)} 筆同事資料",
+            "count": len(staff_list)
+        }
+
+    except Exception as e:
+        db.rollback()
+        return {"error": f"同步失敗：{str(e)}"}
     finally:
         db.close()
