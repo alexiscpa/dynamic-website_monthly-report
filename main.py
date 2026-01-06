@@ -15,7 +15,19 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./monthly_report.db")
 
 # 建立資料庫引擎
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {})
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+elif DATABASE_URL.startswith("postgresql"):
+    # PostgreSQL 連接設定（支援 SSL）
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"sslmode": "prefer"},  # Zeabur PostgreSQL 可能需要 SSL
+        pool_pre_ping=True,  # 檢查連接是否有效
+        pool_size=5,
+        max_overflow=10
+    )
+else:
+    engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
