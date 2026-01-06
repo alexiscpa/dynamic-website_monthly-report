@@ -43,13 +43,41 @@ class EmailServiceOAuth:
         """初始化 Gmail API 服務"""
         creds = None
 
-        # 檢查是否有已儲存的 token
-        if os.path.exists(self.token_file):
+        # 優先從環境變數載入 OAuth 認證資訊（用於 Zeabur 等雲端環境）
+        google_token = os.getenv("GOOGLE_OAUTH_TOKEN")
+        google_refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
+        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+        google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+
+        if google_refresh_token and google_client_id and google_client_secret:
+            try:
+                # 從環境變數建立 Credentials
+                creds = Credentials(
+                    token=google_token,
+                    refresh_token=google_refresh_token,
+                    token_uri="https://oauth2.googleapis.com/token",
+                    client_id=google_client_id,
+                    client_secret=google_client_secret,
+                    scopes=SCOPES
+                )
+                logger.info("✅ 從環境變數載入 OAuth 認證")
+
+                # 如果 token 過期，自動刷新
+                if not creds.valid:
+                    if creds.expired and creds.refresh_token:
+                        creds.refresh(Request())
+                        logger.info("✅ 已刷新過期的 token")
+            except Exception as e:
+                logger.warning(f"⚠️  從環境變數載入認證失敗: {e}")
+                creds = None
+
+        # 如果環境變數沒有，檢查是否有已儲存的 token 檔案
+        if not creds and os.path.exists(self.token_file):
             try:
                 creds = Credentials.from_authorized_user_file(self.token_file, SCOPES)
-                logger.info("✅ 找到已儲存的認證 token")
+                logger.info("✅ 找到已儲存的認證 token 檔案")
             except Exception as e:
-                logger.warning(f"⚠️  讀取 token 失敗: {e}")
+                logger.warning(f"⚠️  讀取 token 檔案失敗: {e}")
 
         # 如果沒有有效的認證，需要重新授權
         if not creds or not creds.valid:

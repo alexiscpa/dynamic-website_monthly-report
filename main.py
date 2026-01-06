@@ -788,3 +788,65 @@ async def sync_staff():
         return {"error": f"同步失敗：{str(e)}"}
     finally:
         db.close()
+
+@app.post("/api/birthday/send")
+async def send_birthday_cards_now():
+    """API：立即發送今天的生日賀卡"""
+    from email_service import EmailService
+    from datetime import date
+
+    db = SessionLocal()
+    try:
+        today = date.today()
+        email_service = EmailService()
+
+        # 取得所有同事
+        all_staff = db.query(Staff).all()
+
+        birthday_list = []
+        success_count = 0
+
+        for staff in all_staff:
+            if not staff.birthday:
+                continue
+
+            try:
+                # 解析生日格式：1970.1.5
+                parts = staff.birthday.split('.')
+                if len(parts) >= 3:
+                    birth_month = int(parts[1])
+                    birth_day = int(parts[2])
+
+                    # 檢查是否為今天生日
+                    if birth_month == today.month and birth_day == today.day:
+                        birthday_list.append({
+                            "name": staff.name,
+                            "email": staff.email,
+                            "birthday": staff.birthday
+                        })
+
+                        # 如果有 email，發送賀卡
+                        if staff.email:
+                            staff_data = {
+                                "name": staff.name,
+                                "email": staff.email
+                            }
+                            if email_service.send_birthday_card(staff_data):
+                                success_count += 1
+
+            except Exception as e:
+                print(f"處理 {staff.name} 生日時發生錯誤：{e}")
+                continue
+
+        return {
+            "success": True,
+            "date": today.strftime("%Y-%m-%d"),
+            "birthday_count": len(birthday_list),
+            "email_sent": success_count,
+            "birthdays": birthday_list
+        }
+
+    except Exception as e:
+        return {"error": f"發送生日賀卡失敗：{str(e)}"}
+    finally:
+        db.close()

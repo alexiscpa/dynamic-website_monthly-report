@@ -12,8 +12,9 @@ from lunarcalendar import Converter, Lunar
 import logging
 import json
 
-# 使用 OAuth 版本的郵件服務
-from email_service_oauth import email_service
+# 使用 OAuth 版本的郵件服務（支援環境變數）
+from email_service_oauth import EmailServiceOAuth
+email_service = EmailServiceOAuth()
 
 logger = logging.getLogger(__name__)
 
