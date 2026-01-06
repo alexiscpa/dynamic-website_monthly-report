@@ -802,13 +802,13 @@ async def sync_staff():
 @app.post("/api/birthday/send")
 async def send_birthday_cards_now():
     """API：立即發送今天的生日賀卡"""
-    from email_service import EmailService
+    from email_service_oauth import EmailServiceOAuth
     from datetime import date
 
     db = SessionLocal()
     try:
         today = date.today()
-        email_service = EmailService()
+        email_service = EmailServiceOAuth()
 
         # 取得所有同事
         all_staff = db.query(Staff).all()
