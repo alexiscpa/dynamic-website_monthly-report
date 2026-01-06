@@ -9,6 +9,7 @@ import logging
 import json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.utils import formataddr
 from typing import List, Dict
 from jinja2 import Template
 
@@ -176,8 +177,8 @@ class EmailServiceOAuth:
             # 建立郵件
             message = MIMEMultipart('alternative')
             message['Subject'] = subject
-            message['From'] = f"{self.sender_name} <{self.sender_email}>"
-            message['To'] = f"{to_name} <{to_email}>"
+            message['From'] = formataddr((self.sender_name, self.sender_email))
+            message['To'] = formataddr((to_name, to_email))
 
             # 加入 HTML 內容
             html_part = MIMEText(html_content, 'html', 'utf-8')
