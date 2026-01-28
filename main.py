@@ -129,17 +129,55 @@ class ReportCreate(BaseModel):
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """驗證密碼"""
     # 使用與 get_password_hash 相同的截斷邏輯
-    password_bytes = plain_password.encode('utf-8')[:72]
-    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+    if not plain_password:
+        return False
+    
+    password_bytes = plain_password.encode('utf-8')
+    
+    if len(password_bytes) > 72:
+        truncate_at = 72
+        while truncate_at > 0:
+            try:
+                truncated_password = password_bytes[:truncate_at].decode('utf-8')
+                break
+            except UnicodeDecodeError:
+                truncate_at -= 1
+        if truncate_at == 0:
+            truncated_password = plain_password[:72]
+    else:
+        truncated_password = plain_password
+    
     return pwd_context.verify(truncated_password, hashed_password)
+
 
 def get_password_hash(password: str) -> str:
     """產生密碼雜湊"""
     # bcrypt 限制密碼最長 72 bytes
-    # 將密碼編碼為 UTF-8 並截斷到 72 bytes,然後解碼回字串
-    password_bytes = password.encode('utf-8')[:72]
-    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+    # 安全地截斷密碼，避免在 UTF-8 字元中間切斷
+    if not password:
+        password = "default_password"
+    
+    # 將密碼編碼為 UTF-8
+    password_bytes = password.encode('utf-8')
+    
+    # 如果超過 72 bytes，需要截斷
+    if len(password_bytes) > 72:
+        # 從 72 bytes 往前找，確保不會在 UTF-8 字元中間切斷
+        truncate_at = 72
+        while truncate_at > 0:
+            try:
+                truncated_password = password_bytes[:truncate_at].decode('utf-8')
+                break
+            except UnicodeDecodeError:
+                truncate_at -= 1
+        if truncate_at == 0:
+            # 如果都失敗，使用前 72 個字元（字元而非 bytes）
+            truncated_password = password[:72]
+    else:
+        truncated_password = password
+    
     return pwd_context.hash(truncated_password)
+
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """產生 JWT Token"""
