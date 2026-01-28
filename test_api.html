@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 測試工具</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #272343;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #272343;
+            color: #ffd803;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #1a1a2e;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #272343;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            display: none;
+        }
+        .success {
+            border-left-color: #4caf50;
+            background-color: #e8f5e9;
+        }
+        .error {
+            border-left-color: #f44336;
+            background-color: #ffebee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 生日賀卡 API 測試工具</h1>
+
+        <div class="input-group">
+            <label for="apiUrl">您的 Zeabur 網址：</label>
+            <input type="text" id="apiUrl" placeholder="https://your-app.zeabur.app" value="">
+        </div>
+
+        <button onclick="testBirthdayAPI()">🎂 發送今天的生日賀卡</button>
+        <button onclick="testStaffSync()">👥 同步同仁資料</button>
+        <button onclick="testStaffList()">📋 查看同仁名單</button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        function getBaseUrl() {
+            const url = document.getElementById('apiUrl').value.trim();
+            if (!url) {
+                alert('請先輸入您的 Zeabur 網址！');
+                return null;
+            }
+            return url.replace(/\/$/, ''); // 移除結尾的斜線
+        }
+
+        async function testBirthdayAPI() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl) return;
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '🔄 正在發送生日賀卡...';
+
+            try {
+                const response = await fetch(`${baseUrl}/api/birthday/send`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 成功！\n\n` +
+                        `日期：${data.date}\n` +
+                        `今日壽星數量：${data.birthday_count}\n` +
+                        `成功發送郵件：${data.email_sent}\n\n` +
+                        `壽星名單：\n${JSON.stringify(data.birthdays, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 失敗：\n\n${data.error || JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 錯誤：\n\n${error.message}\n\n請確認網址是否正確，或查看瀏覽器控制台獲取更多資訊。`;
+            }
+        }
+
+        async function testStaffSync() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl) return;
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '🔄 正在同步同仁資料...';
+
+            try {
+                const response = await fetch(`${baseUrl}/api/staff/sync`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ ${data.message}\n\n同步數量：${data.count} 筆`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 失敗：\n\n${data.error || JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 錯誤：\n\n${error.message}`;
+            }
+        }
+
+        async function testStaffList() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl) return;
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = '🔄 正在讀取同仁名單...';
+
+            try {
+                const response = await fetch(`${baseUrl}/api/staff`);
+                const data = await response.json();
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ 同仁名單（共 ${data.total} 筆）：\n\n` +
+                    JSON.stringify(data.data, null, 2);
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 錯誤：\n\n${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

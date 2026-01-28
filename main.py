@@ -417,19 +417,88 @@ def get_current_month_birthdays(staff_list, month=1):
                 continue
     return birthdays
 
+def generate_calendar_html(year: int, month: int, event_dates: list = None):
+    """生成月曆 HTML
+    
+    Args:
+        year: 年份
+        month: 月份 (1-12)
+        event_dates: 有事件的日期列表，例如 [10, 25, 31]
+    
+    Returns:
+        月曆的 HTML 字串
+    """
+    import calendar
+    from datetime import datetime
+    
+    if event_dates is None:
+        event_dates = []
+    
+    # 取得當月的日曆
+    cal = calendar.monthcalendar(year, month)
+    
+    # 取得今天的日期
+    today = datetime.now()
+    is_current_month = (today.year == year and today.month == month)
+    today_day = today.day if is_current_month else None
+    
+    # 生成月曆 HTML
+    html = f'<div class="month-calendar">\n'
+    html += f'    <div class="month-calendar-header">{year} 年 {month} 月</div>\n'
+    html += '    <div class="calendar-weekdays">\n'
+    html += '        <div>日</div>\n'
+    html += '        <div>一</div>\n'
+    html += '        <div>二</div>\n'
+    html += '        <div>三</div>\n'
+    html += '        <div>四</div>\n'
+    html += '        <div>五</div>\n'
+    html += '        <div>六</div>\n'
+    html += '    </div>\n'
+    html += '    <div class="calendar-days">\n'
+    
+    # 生成日期格子
+    for week in cal:
+        for day in week:
+            if day == 0:
+                # 空白格子
+                html += '        <div class="empty"></div>\n'
+            else:
+                # 判斷是否為今天、事件日
+                classes = []
+                if day == today_day:
+                    classes.append('today')
+                if day in event_dates:
+                    classes.append('event-day')
+                
+                class_str = f' class="{" ".join(classes)}"' if classes else ''
+                html += f'        <div{class_str}>{day}</div>\n'
+    
+    html += '    </div>\n'
+    html += '</div>\n'
+    
+    return html
+
 # ==================== 路由 ====================
 
 @app.get("/", response_class=HTMLResponse)
-async def read_root():
+async def read_root(month: Optional[str] = None):
     """首頁 - 顯示月報"""
     db = SessionLocal()
 
     try:
-        # 取得當前月份的月報（預設 2026-01）
-        report = db.query(MonthlyReport).filter(MonthlyReport.month == "2026-01").first()
+        # 如果沒有指定月份，取得最新的月報
+        if not month:
+            latest_report = db.query(MonthlyReport).order_by(MonthlyReport.month.desc()).first()
+            if latest_report:
+                month = latest_report.month
+            else:
+                return HTMLResponse("<h1>找不到月報資料</h1><p>請確認資料庫是否正確初始化</p>")
+        
+        # 取得指定月份的月報
+        report = db.query(MonthlyReport).filter(MonthlyReport.month == month).first()
 
         if not report:
-            return HTMLResponse("<h1>找不到月報資料</h1><p>請確認資料庫是否正確初始化</p>")
+            return HTMLResponse(f"<h1>找不到月報資料</h1><p>找不到 {month} 的月報</p>")
 
         # 解析 JSON 資料
         completed = json.loads(report.completed)
@@ -440,8 +509,62 @@ async def read_root():
         # 取得所有同事
         all_staff = db.query(Staff).all()
 
-        # 取得 1 月壽星
-        birthdays = get_current_month_birthdays(all_staff, month=1)
+        # 取得當月壽星
+        try:
+            month_num = int(month.split('-')[1])
+        except:
+            month_num = 1
+        birthdays = get_current_month_birthdays(all_staff, month=month_num)
+        
+        # 取得所有可用月份（用於下拉選單）
+        all_months = db.query(MonthlyReport.month).order_by(MonthlyReport.month.desc()).all()
+        available_months = [m.month for m in all_months]
+        
+        # 解析年份和月份，生成動態月曆
+        try:
+            year = int(month.split('-')[0])
+            month_num = int(month.split('-')[1])
+        except:
+            year = 2026
+            month_num = 1
+        
+        # 從行事曆資料中提取有事件的日期
+        # 從行事曆資料中提取有事件的日期
+        event_dates = []
+        for cal_item in calendar:
+            try:
+                date_str = cal_item.get('date', '')
+                # 處理日期範圍，例如 "2/14-2/22" 或 "2/14~2/22"
+                if '-' in date_str or '~' in date_str:
+                    separator = '-' if '-' in date_str else '~'
+                    start_str, end_str = date_str.split(separator)
+                    
+                    # 解析開始日期
+                    if '/' in start_str:
+                        start_day = int(start_str.split('/')[1])
+                    else:
+                        start_day = int(start_str)
+                        
+                    # 解析結束日期
+                    if '/' in end_str:
+                        end_day = int(end_str.split('/')[1])
+                    else:
+                        end_day = int(end_str)
+                    
+                    # 將範圍內的所有日期加入列表
+                    event_dates.extend(range(start_day, end_day + 1))
+                
+                # 處理單一日期，例如 "1/10"
+                elif '/' in date_str:
+                    parts = date_str.split('/')
+                    if len(parts) >= 2:
+                        day = int(parts[1])
+                        event_dates.append(day)
+            except:
+                continue
+        
+        # 生成月曆 HTML
+        calendar_html = generate_calendar_html(year, month_num, event_dates)
 
     finally:
         db.close()
@@ -499,6 +622,48 @@ async def read_root():
                 color: var(--accent-color);
                 font-size: 18px;
                 letter-spacing: 2px;
+            }}
+
+            .month-selector {{
+                margin-top: 24px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 12px;
+            }}
+
+            .month-selector label {{
+                color: var(--accent-color);
+                font-size: 16px;
+                font-weight: bold;
+            }}
+
+            .month-selector select {{
+                background-color: var(--accent-color);
+                color: var(--dark-color);
+                border: 2px solid var(--dark-color);
+                padding: 12px 24px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+                transition: all 0.3s ease;
+            }}
+
+            .month-selector select:hover {{
+                background-color: var(--dark-color);
+                color: var(--accent-color);
+                transform: translateY(-2px);
+            }}
+
+            .month-selector select:focus {{
+                outline: 3px solid var(--accent-color);
+                outline-offset: 2px;
+            }}
+
+            .loading {{
+                opacity: 0.5;
+                pointer-events: none;
             }}
 
             .quote-section {{
@@ -780,7 +945,13 @@ async def read_root():
         <div class="container">
             <div class="header">
                 <h1>MONTHLY REPORT</h1>
-                <p>財務處 2026 年 1 月份月報</p>
+                <p id="report-subtitle">財務處 {month.split('-')[0]} 年 {int(month.split('-')[1])} 月份月報</p>
+                <div class="month-selector">
+                    <label for="month-select">選擇月份：</label>
+                    <select id="month-select">
+                        {''.join([f'<option value="{m}" {"selected" if m == month else ""}>{m.split("-")[0]} 年 {int(m.split("-")[1])} 月</option>' for m in available_months])}
+                    </select>
+                </div>
             </div>
 
             <div class="quote-section">
@@ -808,6 +979,15 @@ async def read_root():
             </div>
 
             <div class="section">
+                <h2 class="section-title">稅務快訊 Tax News</h2>
+                <div class="highlight-box">
+                    <ul>
+                        {"".join([f'<li><h3>{item["title"]}</h3><p>{item["content"]}</p></li>' for item in tax_news])}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
                 <h2 class="section-title">本月重要行事曆 Calendar</h2>
                 <div class="calendar-grid">
                     <div>
@@ -825,54 +1005,7 @@ async def read_root():
                         </table>
                     </div>
 
-                    <div class="month-calendar">
-                        <div class="month-calendar-header">2026 年 1 月</div>
-                        <div class="calendar-weekdays">
-                            <div>日</div>
-                            <div>一</div>
-                            <div>二</div>
-                            <div>三</div>
-                            <div>四</div>
-                            <div>五</div>
-                            <div>六</div>
-                        </div>
-                        <div class="calendar-days">
-                            <div class="empty"></div>
-                            <div class="empty"></div>
-                            <div class="empty"></div>
-                            <div>1</div>
-                            <div>2</div>
-                            <div>3</div>
-                            <div>4</div>
-                            <div class="today">5</div>
-                            <div>6</div>
-                            <div>7</div>
-                            <div>8</div>
-                            <div>9</div>
-                            <div class="event-day">10</div>
-                            <div>11</div>
-                            <div>12</div>
-                            <div>13</div>
-                            <div>14</div>
-                            <div>15</div>
-                            <div>16</div>
-                            <div>17</div>
-                            <div>18</div>
-                            <div>19</div>
-                            <div>20</div>
-                            <div>21</div>
-                            <div>22</div>
-                            <div>23</div>
-                            <div>24</div>
-                            <div class="event-day">25</div>
-                            <div>26</div>
-                            <div>27</div>
-                            <div>28</div>
-                            <div>29</div>
-                            <div>30</div>
-                            <div class="event-day">31</div>
-                        </div>
-                    </div>
+                    {calendar_html}
                 </div>
             </div>
 
@@ -887,6 +1020,15 @@ async def read_root():
                 <p>© 2026 財務處自動化月報系統 | Powered by FastAPI & PostgreSQL</p>
             </div>
         </div>
+
+        <script>
+            // 月份選擇器事件監聽
+            document.getElementById('month-select').addEventListener('change', function() {{
+                const selectedMonth = this.value;
+                // 使用 URL 參數重新載入頁面
+                window.location.href = '/?month=' + selectedMonth;
+            }});
+        </script>
     </body>
     </html>
     """
@@ -1300,7 +1442,7 @@ async def admin_page():
             <!-- Login Section -->
             <div id="loginSection" class="login-section">
                 <h2>管理員登入</h2>
-                <form id="loginForm">
+                <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();">
                     <div class="form-group">
                         <label for="username">帳號</label>
                         <input type="text" id="username" name="username" required>
@@ -1450,8 +1592,8 @@ async def admin_page():
             });
 
             // Login
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
+            // Login
+            async function handleLogin() {
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
 
@@ -1476,7 +1618,7 @@ async def admin_page():
                 } catch (error) {
                     document.getElementById('loginError').textContent = '連線失敗，請稍後再試';
                 }
-            });
+            }
 
             // Verify token
             async function verifyToken() {
@@ -1640,7 +1782,7 @@ async def admin_page():
                 const container = document.getElementById('calendarSection');
                 container.innerHTML = items.map((item, index) => `
                     <div class="calendar-row" data-index="${index}">
-                        <input type="text" value="${escapeHtml(item.date)}" placeholder="日期" onchange="updateCalendarItem(${index}, 'date', this.value)">
+                        <input type="text" value="${escapeHtml(item.date)}" placeholder="日期 (如 1/15 或 2/14-2/22)" onchange="updateCalendarItem(${index}, 'date', this.value)">
                         <input type="text" value="${escapeHtml(item.event)}" placeholder="事項" onchange="updateCalendarItem(${index}, 'event', this.value)">
                         <input type="text" value="${escapeHtml(item.detail)}" placeholder="說明" onchange="updateCalendarItem(${index}, 'detail', this.value)">
                         <button onclick="removeCalendarItem(${index})" class="btn btn-danger btn-icon">×</button>
@@ -1795,7 +1937,9 @@ async def admin_page():
 
             // Generate tax news using AI
             async function generateTaxNews() {
-                if (!confirm('確定要使用 AI 自動生成 5 則稅務快訊嗎?\n\n這將會替換現有的稅務快訊內容。')) {
+                if (!confirm(`確定要使用 AI 自動生成 5 則稅務快訊嗎?
+
+這將會替換現有的稅務快訊內容。`)) {
                     return;
                 }
 
@@ -2237,6 +2381,70 @@ async def generate_tax_news_api(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"生成稅務快訊失敗: {str(e)}"
         )
 
+
+# ==================== 月份選擇 API ====================
+
+@app.get("/api/reports/months")
+async def get_available_months():
+    """取得所有可用的月報月份列表"""
+    db = SessionLocal()
+    try:
+        reports = db.query(MonthlyReport.month).order_by(MonthlyReport.month.desc()).all()
+        months = [report.month for report in reports]
+        return {"months": months}
+    finally:
+        db.close()
+
+
+@app.get("/api/reports/{month}")
+async def get_report_by_month(month: str):
+    """取得指定月份的月報資料（JSON 格式）"""
+    db = SessionLocal()
+    try:
+        # 驗證月份格式
+        try:
+            year, month_num = month.split('-')
+            year = int(year)
+            month_num = int(month_num)
+            if month_num < 1 or month_num > 12:
+                raise ValueError("月份必須在 1-12 之間")
+        except:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="月份格式錯誤，應為 YYYY-MM 格式"
+            )
+        
+        # 查詢月報
+        report = db.query(MonthlyReport).filter(MonthlyReport.month == month).first()
+        
+        if not report:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"找不到 {month} 的月報資料"
+            )
+        
+        # 解析 JSON 資料
+        completed = json.loads(report.completed)
+        focus = json.loads(report.focus)
+        tax_news = json.loads(report.tax_news)
+        calendar = json.loads(report.calendar)
+        
+        # 取得所有同事
+        all_staff = db.query(Staff).all()
+        
+        # 取得當月壽星
+        birthdays = get_current_month_birthdays(all_staff, month=month_num)
+        
+        return {
+            "month": month,
+            "quotes": report.quotes,
+            "completed": completed,
+            "focus": focus,
+            "tax_news": tax_news,
+            "calendar": calendar,
+            "birthdays": birthdays
+        }
+    finally:
+        db.close()
