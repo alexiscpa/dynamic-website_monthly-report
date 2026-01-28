@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理後台 - 財務處月報系統</title>
+    <style>
+        :root {
+            --bg-color: #fffffe;
+            --dark-color: #272343;
+            --accent-color: #ffd803;
+            --success-color: #4caf50;
+            --error-color: #f44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: var(--dark-color);
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+            border: 3px solid var(--dark-color);
+        }
+
+        .header h1 {
+            color: var(--accent-color);
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            color: var(--accent-color);
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .panel {
+            background: white;
+            padding: 30px;
+            margin-top: -3px;
+            border: 3px solid var(--dark-color);
+            border-radius: 0 0 10px 10px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent-color);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-title:hover {
+            color: var(--accent-color);
+        }
+
+        .section-title::before {
+            content: '▼ ';
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        .section-title.collapsed::before {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            margin-top: 20px;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--dark-color);
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(255, 216, 3, 0.2);
+        }
+
+        button {
+            background-color: var(--dark-color);
+            color: var(--accent-color);
+            border: 2px solid var(--dark-color);
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: var(--dark-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.delete-btn {
+            background-color: var(--error-color);
+            border-color: var(--error-color);
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        button.delete-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px solid var(--dark-color);
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-box.success {
+            border-color: var(--success-color);
+            background-color: #e8f5e9;
+        }
+
+        .result-box.error {
+            border-color: var(--error-color);
+            background-color: #ffebee;
+        }
+
+        .quote-display {
+            font-size: 20px;
+            font-style: italic;
+            padding: 20px;
+            background-color: var(--accent-color);
+            border: 2px solid var(--dark-color);
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .news-list {
+            list-style: none;
+        }
+
+        .news-item {
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid var(--dark-color);
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        .news-item h4 {
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .news-item p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status.logged-in {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status.logged-out {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .item-card {
+            background-color: #f9f9f9;
+            border: 2px solid var(--dark-color);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .item-card .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .date-select-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .section-title {
+                font-size: 20px;
+            }
+
+            button {
+                width: 100%;
+                margin-right: 0;
+            }
+
+            .date-select-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 管理後台</h1>
+            <p>財務處月報系統 - 內容管理工具</p>
+        </div>
+
+        <div class="panel">
+            <!-- 登入區塊 -->
+            <div id="loginSection" class="section">
+                <h2 class="section-title" onclick="toggleSection(this)">登入 <span id="loginStatus"
+                        class="status logged-out">未登入</span></h2>
+
+                <div class="section-content">
+                    <div class="input-group">
+                        <label for="apiUrl">API 網址：</label>
+                        <input type="text" id="apiUrl" placeholder="http://localhost:8000"
+                            value="http://localhost:8000">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="username">使用者名稱：</label>
+                        <input type="text" id="username" placeholder="admin" value="admin">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="password">密碼：</label>
+                        <input type="password" id="password" placeholder="請輸入密碼" value="admin123">
+                    </div>
+
+                    <button onclick="login()">🔑 登入</button>
+                    <button onclick="logout()">🚪 登出</button>
+
+                    <div id="loginResult" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- 資料載入區塊 -->
+            <div id="loadSection" class="section hidden">
+                <h2 class="section-title" onclick="toggleSection(this)">📂 載入月報資料</h2>
+
+                <div class="section-content">
+                    <div class="input-group">
+                        <label for="loadMonth">選擇月份：</label>
+                        <input type="text" id="loadMonth" placeholder="2026-01" value="2026-01">
+                    </div>
+
+                    <button onclick="loadReport()">📥 載入月報</button>
+
+                    <div id="loadResult" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- 上月完成工作編輯區 -->
+            <div id="completedSection" class="section hidden">
+                <h2 class="section-title" onclick="toggleSection(this)">✅ 上月完成工作</h2>
+
+                <div class="section-content">
+                    <div id="completedItems"></div>
+                    <button onclick="addCompletedItem()">➕ 新增項目</button>
+                    <button onclick="saveCompleted()">💾 儲存</button>
+                    <div id="completedResult" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- 本月工作重點編輯區 -->
+            <div id="focusSection" class="section hidden">
+                <h2 class="section-title" onclick="toggleSection(this)">🎯 本月工作重點</h2>
+
+                <div class="section-content">
+                    <div id="focusItems"></div>
+                    <button onclick="addFocusItem()">➕ 新增項目</button>
+                    <button onclick="saveFocus()">💾 儲存</button>
+                    <div id="focusResult" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- 稅務快訊編輯區 -->
+            <div id="taxNewsSection" class="section hidden">
+                <h2 class="section-title" onclick="toggleSection(this)">📰 稅務快訊</h2>
+
+                <div class="section-content">
+                    <p style="color: #666; margin-bottom: 15px;">最多 5 則稅務快訊</p>
+                    <div id="taxNewsItems"></div>
+                    <button onclick="addTaxNewsItem()" id="addTaxNewsBtn">➕ 新增快訊</button>
+                    <button onclick="saveTaxNews()">💾 儲存</button>
+                    <div id="taxNewsEditResult" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- 行事曆編輯區 -->
+            <div id="calendarSection" class="section hidden">
+                <h2 class="section-title" onclick="toggleSection(this)">📅 行事曆</h2>
+
+                <div class="section-content">
+                    <div id="calendarItems"></div>
+                    <button onclick="addCalendarItem()">➕ 新增行事曆項目</button>
+                    <button onclick="saveCalendar()">💾 儲存</button>
+                    <div id="calendarResult" class="result-box"></div>
+                </div>
+            </div>
+
+            <!-- AI 生成功能區塊 -->
+            <div id="aiSection" class="section hidden">
+                <h2 class="section-title" onclick="toggleSection(this)">🤖 AI 內容生成</h2>
+
+                <div class="section-content collapsed">
+                    <!-- 生成金句 -->
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="margin-bottom: 15px;">💡 激勵金句生成</h3>
+                        <button onclick="generateQuote()">✨ 生成金句</button>
+                        <button onclick="updateQuote()" id="updateQuoteBtn" disabled>💾 更新到月報</button>
+
+                        <div id="quoteResult" class="result-box"></div>
+                    </div>
+
+                    <!-- 生成稅務快訊 -->
+                    <div>
+                        <h3 style="margin-bottom: 15px;">📰 稅務快訊生成</h3>
+                        <button onclick="generateTaxNews()">📝 生成稅務快訊</button>
+                        <button onclick="updateTaxNews()" id="updateNewsBtn" disabled>💾 更新到月報</button>
+
+                        <div id="newsResult" class="result-box"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let generatedQuote = null;
+        let generatedNews = null;
+        let currentMonth = '2026-01';
+        let completedCounter = 0;
+        let focusCounter = 0;
+        let taxNewsCounter = 0;
+        let calendarCounter = 0;
+
+        // 頁面載入時檢查是否已登入
+        window.onload = function () {
+            const savedToken = localStorage.getItem('authToken');
+            const savedApiUrl = localStorage.getItem('apiUrl');
+
+            if (savedToken) {
+                authToken = savedToken;
+                if (savedApiUrl) {
+                    document.getElementById('apiUrl').value = savedApiUrl;
+                }
+                updateLoginStatus(true);
+            }
+        };
+
+        function toggleSection(titleElement) {
+            const content = titleElement.nextElementSibling;
+            content.classList.toggle('collapsed');
+            titleElement.classList.toggle('collapsed');
+        }
+
+        function getBaseUrl() {
+            const url = document.getElementById('apiUrl').value.trim();
+            if (!url) {
+                alert('請輸入 API 網址！');
+                return null;
+            }
+            return url.replace(/\/$/, '');
+        }
+
+        function updateLoginStatus(isLoggedIn) {
+            const statusEl = document.getElementById('loginStatus');
+            const sections = ['loadSection', 'completedSection', 'focusSection', 'taxNewsSection', 'calendarSection', 'aiSection'];
+
+            if (isLoggedIn) {
+                statusEl.textContent = '已登入';
+                statusEl.className = 'status logged-in';
+                sections.forEach(id => document.getElementById(id).classList.remove('hidden'));
+            } else {
+                statusEl.textContent = '未登入';
+                statusEl.className = 'status logged-out';
+                sections.forEach(id => document.getElementById(id).classList.add('hidden'));
+            }
+        }
+
+        async function login() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl) return;
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('loginResult');
+
+            if (!username || !password) {
+                showResult(resultDiv, '請輸入使用者名稱和密碼', 'error');
+                return;
+            }
+
+            showResult(resultDiv, '🔄 登入中...', '');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.access_token) {
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('apiUrl', baseUrl);
+
+                    showResult(resultDiv, `✅ 登入成功！歡迎 ${username}`, 'success');
+                    updateLoginStatus(true);
+                } else {
+                    showResult(resultDiv, `❌ 登入失敗：${data.detail || '未知錯誤'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ 錯誤：${error.message}`, 'error');
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('apiUrl');
+
+            const resultDiv = document.getElementById('loginResult');
+            showResult(resultDiv, '✅ 已登出', 'success');
+            updateLoginStatus(false);
+        }
+
+        // ==================== 載入月報資料 ====================
+        async function loadReport() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl || !authToken) {
+                alert('請先登入！');
+                return;
+            }
+
+            const month = document.getElementById('loadMonth').value.trim();
+            if (!month) {
+                alert('請輸入月份！');
+                return;
+            }
+
+            currentMonth = month;
+            const resultDiv = document.getElementById('loadResult');
+            showResult(resultDiv, '🔄 載入中...', '');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/report/${month}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 載入上月完成工作
+                    const completed = data.completed || [];
+                    document.getElementById('completedItems').innerHTML = '';
+                    completed.forEach(item => addCompletedItem(item.title, item.content));
+
+                    // 載入本月工作重點
+                    const focus = data.focus || [];
+                    document.getElementById('focusItems').innerHTML = '';
+                    focus.forEach(item => addFocusItem(item.title, item.content));
+
+                    // 載入稅務快訊
+                    const taxNews = data.tax_news || [];
+                    document.getElementById('taxNewsItems').innerHTML = '';
+                    taxNews.forEach(item => addTaxNewsItem(item.title, item.content));
+
+                    // 載入行事曆
+                    const calendar = data.calendar || [];
+                    document.getElementById('calendarItems').innerHTML = '';
+                    calendar.forEach(item => addCalendarItem(item.date, item.event, item.detail));
+
+                    showResult(resultDiv, `✅ 成功載入 ${month} 月報資料！`, 'success');
+                } else {
+                    showResult(resultDiv, `❌ 載入失敗：${data.detail || '找不到該月份的月報'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ 錯誤：${error.message}`, 'error');
+            }
+        }
+
+        // ==================== 上月完成工作 ====================
+        function addCompletedItem(title = '', content = '') {
+            const id = `completed-${completedCounter++}`;
+            const html = `
+                <div class="item-card" id="${id}">
+                    <button class="delete-btn" onclick="deleteItem('${id}')">🗑️ 刪除</button>
+                    <div class="input-group">
+                        <label>標題：</label>
+                        <input type="text" class="completed-title" value="${title}" placeholder="例如：年度預算審核">
+                    </div>
+                    <div class="input-group">
+                        <label>內容：</label>
+                        <textarea class="completed-content" placeholder="例如：完成 2026 年度預算審核，並提交董事會核准">${content}</textarea>
+                    </div>
+                </div>
+            `;
+            document.getElementById('completedItems').insertAdjacentHTML('beforeend', html);
+        }
+
+        async function saveCompleted() {
+            const items = [];
+            document.querySelectorAll('#completedItems .item-card').forEach(card => {
+                const title = card.querySelector('.completed-title').value.trim();
+                const content = card.querySelector('.completed-content').value.trim();
+                if (title && content) {
+                    items.push({ title, content });
+                }
+            });
+
+            await saveToDatabase('completed', items, 'completedResult');
+        }
+
+        // ==================== 本月工作重點 ====================
+        function addFocusItem(title = '', content = '') {
+            const id = `focus-${focusCounter++}`;
+            const html = `
+                <div class="item-card" id="${id}">
+                    <button class="delete-btn" onclick="deleteItem('${id}')">🗑️ 刪除</button>
+                    <div class="input-group">
+                        <label>標題：</label>
+                        <input type="text" class="focus-title" value="${title}" placeholder="例如：年終獎金試算">
+                    </div>
+                    <div class="input-group">
+                        <label>內容：</label>
+                        <textarea class="focus-content" placeholder="例如：完成全體員工年終獎金試算與核對">${content}</textarea>
+                    </div>
+                </div>
+            `;
+            document.getElementById('focusItems').insertAdjacentHTML('beforeend', html);
+        }
+
+        async function saveFocus() {
+            const items = [];
+            document.querySelectorAll('#focusItems .item-card').forEach(card => {
+                const title = card.querySelector('.focus-title').value.trim();
+                const content = card.querySelector('.focus-content').value.trim();
+                if (title && content) {
+                    items.push({ title, content });
+                }
+            });
+
+            await saveToDatabase('focus', items, 'focusResult');
+        }
+
+        // ==================== 稅務快訊 ====================
+        function addTaxNewsItem(title = '', content = '') {
+            const count = document.querySelectorAll('#taxNewsItems .item-card').length;
+            if (count >= 5) {
+                alert('最多只能新增 5 則稅務快訊！');
+                return;
+            }
+
+            const id = `taxnews-${taxNewsCounter++}`;
+            const html = `
+                <div class="item-card" id="${id}">
+                    <button class="delete-btn" onclick="deleteItem('${id}'); updateTaxNewsButton();">🗑️ 刪除</button>
+                    <div class="input-group">
+                        <label>標題：</label>
+                        <input type="text" class="taxnews-title" value="${title}" placeholder="例如：CFC 新制上路">
+                    </div>
+                    <div class="input-group">
+                        <label>內容：</label>
+                        <textarea class="taxnews-content" placeholder="例如：受控外國企業（CFC）制度已正式實施，跨國企業需留意申報義務">${content}</textarea>
+                    </div>
+                </div>
+            `;
+            document.getElementById('taxNewsItems').insertAdjacentHTML('beforeend', html);
+            updateTaxNewsButton();
+        }
+
+        function updateTaxNewsButton() {
+            const count = document.querySelectorAll('#taxNewsItems .item-card').length;
+            document.getElementById('addTaxNewsBtn').disabled = count >= 5;
+        }
+
+        async function saveTaxNews() {
+            const items = [];
+            document.querySelectorAll('#taxNewsItems .item-card').forEach(card => {
+                const title = card.querySelector('.taxnews-title').value.trim();
+                const content = card.querySelector('.taxnews-content').value.trim();
+                if (title && content) {
+                    items.push({ title, content });
+                }
+            });
+
+            await saveToDatabase('tax_news', items, 'taxNewsEditResult');
+        }
+
+        // ==================== 行事曆 ====================
+        function addCalendarItem(date = '', event = '', detail = '') {
+            const id = `calendar-${calendarCounter++}`;
+            const html = `
+                <div class="item-card" id="${id}">
+                    <button class="delete-btn" onclick="deleteItem('${id}')">🗑️ 刪除</button>
+                    <div class="date-select-group">
+                        <div class="input-group">
+                            <label>月份：</label>
+                            <select class="calendar-month">
+                                ${generateMonthOptions(date)}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>日期：</label>
+                            <select class="calendar-day">
+                                ${generateDayOptions(date)}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>事項：</label>
+                        <input type="text" class="calendar-event" value="${event}" placeholder="例如：營業稅申報">
+                    </div>
+                    <div class="input-group">
+                        <label>說明：</label>
+                        <textarea class="calendar-detail" placeholder="例如：1 月 10 日前完成 12 月份營業稅申報">${detail}</textarea>
+                    </div>
+                </div>
+            `;
+            document.getElementById('calendarItems').insertAdjacentHTML('beforeend', html);
+        }
+
+        function generateMonthOptions(currentDate) {
+            const [month] = currentDate ? currentDate.split('/') : ['1'];
+            let options = '';
+            for (let i = 1; i <= 12; i++) {
+                const selected = i == month ? 'selected' : '';
+                options += `<option value="${i}" ${selected}>${i} 月</option>`;
+            }
+            return options;
+        }
+
+        function generateDayOptions(currentDate) {
+            const [, day] = currentDate ? currentDate.split('/') : ['', '1'];
+            let options = '';
+            for (let i = 1; i <= 31; i++) {
+                const selected = i == day ? 'selected' : '';
+                options += `<option value="${i}" ${selected}>${i} 日</option>`;
+            }
+            return options;
+        }
+
+        async function saveCalendar() {
+            const items = [];
+            document.querySelectorAll('#calendarItems .item-card').forEach(card => {
+                const month = card.querySelector('.calendar-month').value;
+                const day = card.querySelector('.calendar-day').value;
+                const event = card.querySelector('.calendar-event').value.trim();
+                const detail = card.querySelector('.calendar-detail').value.trim();
+                if (event && detail) {
+                    items.push({
+                        date: `${month}/${day}`,
+                        event,
+                        detail
+                    });
+                }
+            });
+
+            await saveToDatabase('calendar', items, 'calendarResult');
+        }
+
+        // ==================== 通用函數 ====================
+        function deleteItem(id) {
+            if (confirm('確定要刪除這個項目嗎？')) {
+                document.getElementById(id).remove();
+            }
+        }
+
+        async function saveToDatabase(field, items, resultDivId) {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl || !authToken) {
+                alert('請先登入！');
+                return;
+            }
+
+            const resultDiv = document.getElementById(resultDivId);
+            showResult(resultDiv, '🔄 儲存中...', '');
+
+            try {
+                const body = {};
+                body[field] = items;
+
+                const response = await fetch(`${baseUrl}/api/report/${currentMonth}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showResult(resultDiv, `✅ 成功儲存 ${items.length} 個項目到 ${currentMonth} 月報！`, 'success');
+                } else {
+                    showResult(resultDiv, `❌ 儲存失敗：${data.detail || '未知錯誤'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ 錯誤：${error.message}`, 'error');
+            }
+        }
+
+        // ==================== AI 生成功能 ====================
+        async function generateQuote() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl || !authToken) {
+                alert('請先登入！');
+                return;
+            }
+
+            const resultDiv = document.getElementById('quoteResult');
+            showResult(resultDiv, '🔄 AI 正在生成金句...', '');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/generate/quote`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    generatedQuote = data.quote;
+                    const html = `
+                        <div class="quote-display">${data.quote}</div>
+                        <p style="margin-top: 10px; color: #666;">✅ 金句生成成功！點擊「更新到月報」按鈕將此金句儲存到資料庫。</p>
+                    `;
+                    showResult(resultDiv, html, 'success');
+                    document.getElementById('updateQuoteBtn').disabled = false;
+                } else {
+                    showResult(resultDiv, `❌ 生成失敗：${data.detail || '未知錯誤'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ 錯誤：${error.message}`, 'error');
+            }
+        }
+
+        async function updateQuote() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl || !authToken || !generatedQuote) return;
+
+            const resultDiv = document.getElementById('quoteResult');
+            showResult(resultDiv, '🔄 正在更新月報...', '');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/report/${currentMonth}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quotes: generatedQuote })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const html = `
+                        <div class="quote-display">${generatedQuote}</div>
+                        <p style="margin-top: 10px; color: var(--success-color); font-weight: bold;">✅ 已成功更新到 ${currentMonth} 月報！</p>
+                    `;
+                    showResult(resultDiv, html, 'success');
+                } else {
+                    showResult(resultDiv, `❌ 更新失敗：${data.detail || '未知錯誤'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ 錯誤：${error.message}`, 'error');
+            }
+        }
+
+        async function generateTaxNews() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl || !authToken) {
+                alert('請先登入！');
+                return;
+            }
+
+            const resultDiv = document.getElementById('newsResult');
+            showResult(resultDiv, '🔄 AI 正在生成稅務快訊...', '');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/generate/tax-news`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    generatedNews = data.tax_news;
+
+                    let html = '<ul class="news-list">';
+                    data.tax_news.forEach((item, index) => {
+                        html += `
+                            <li class="news-item">
+                                <h4>${index + 1}. ${item.title}</h4>
+                                <p>${item.content}</p>
+                            </li>
+                        `;
+                    });
+                    html += '</ul>';
+                    html += '<p style="margin-top: 15px; color: #666;">✅ 稅務快訊生成成功！點擊「更新到月報」按鈕將這些快訊儲存到資料庫。</p>';
+
+                    showResult(resultDiv, html, 'success');
+                    document.getElementById('updateNewsBtn').disabled = false;
+                } else {
+                    showResult(resultDiv, `❌ 生成失敗：${data.detail || '未知錯誤'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ 錯誤：${error.message}`, 'error');
+            }
+        }
+
+        async function updateTaxNews() {
+            const baseUrl = getBaseUrl();
+            if (!baseUrl || !authToken || !generatedNews) return;
+
+            const resultDiv = document.getElementById('newsResult');
+            showResult(resultDiv, '🔄 正在更新月報...', '');
+
+            try {
+                const response = await fetch(`${baseUrl}/api/report/${currentMonth}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tax_news: generatedNews })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    let html = '<ul class="news-list">';
+                    generatedNews.forEach((item, index) => {
+                        html += `
+                            <li class="news-item">
+                                <h4>${index + 1}. ${item.title}</h4>
+                                <p>${item.content}</p>
+                            </li>
+                        `;
+                    });
+                    html += '</ul>';
+                    html += `<p style="margin-top: 15px; color: var(--success-color); font-weight: bold;">✅ 已成功更新到 ${currentMonth} 月報！</p>`;
+
+                    showResult(resultDiv, html, 'success');
+                } else {
+                    showResult(resultDiv, `❌ 更新失敗：${data.detail || '未知錯誤'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ 錯誤：${error.message}`, 'error');
+            }
+        }
+
+        function showResult(element, message, type) {
+            element.innerHTML = message;
+            element.className = 'result-box show';
+            if (type) {
+                element.classList.add(type);
+            }
+        }
+    </script>
+</body>
+
+</html>
