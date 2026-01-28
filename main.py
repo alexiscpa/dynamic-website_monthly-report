@@ -751,6 +751,29 @@ async def read_root(month: Optional[str] = None):
                 margin-bottom: 16px;
             }}
 
+            .month-selector {{
+                margin-top: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+            }}
+
+            .month-selector label {{
+                color: var(--accent-color); /* Yellow text for label */
+                font-weight: bold;
+            }}
+
+            #month-select {{
+                padding: 8px 16px;
+                background-color: var(--accent-color); /* Yellow background */
+                color: var(--dark-color); /* Dark text */
+                border: none;
+                font-weight: bold;
+                font-size: 16px;
+                cursor: pointer;
+            }}
+
             .highlight-box ul {{
                 list-style: none;
             }}
